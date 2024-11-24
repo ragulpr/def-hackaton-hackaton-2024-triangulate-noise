@@ -250,6 +250,8 @@ def main():
     port = int(sys.argv[1])
     if len(sys.argv)==3:
         output_file = sys.argv[2]
+        with open(self.output_file, 'a') as f:
+            filetowrite.write('')
     else:
         output_file=None
 
