@@ -101,7 +101,7 @@ class NoiseDetector:
                     self.last_detection = exact_timestamp
                     
                     latest_event_times = {
-                        self.network.get_my_ip():exact_timestamp,
+                        self.network.get_my_ip():exact_timestamp.item(),
                         }
 
                     print(f"Locally detected noise. Amplitude={amplitude:.2f} Time={exact_timestamp:.6f} BufferStartTime={buffer_start} Now={time.time()}")
