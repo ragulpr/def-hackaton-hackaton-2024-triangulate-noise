@@ -92,10 +92,10 @@ class NoiseDetector:
     CHANNELS = 1  # Mono audio
     RATE = 44100  # Sampling rate (Hz)
     CHUNK_SIZE = 1024  # Number of frames per buffer (CHUNK_SIZE/RATE~0.0232seconds (23.2 ms))
-    
+    WINDOW_SIZE_SECS = CHUNK_SIZE/RATE
     # Detection parameters
     THRESHOLD = 3   # Amplitude threshold for noise detection
-    COOLDOWN = 1.0  # Seconds between detections to avoid multiple triggers
+    COOLDOWN = 4*WINDOW_SIZE_SECS  # Seconds between detections to avoid multiple triggers
 
     BUFFER_T_ALIGN = 1000
 
@@ -208,7 +208,7 @@ class NoiseDetector:
                                 "coord_dict":get_sound_position(latest_event_times),
                                 "amplitude":amplitude.item()
                             }
-                            if (max(timestamps) - min(timestamps)<(self.CHUNK_SIZE/self.RATE)) and len(timestamps)==3:
+                            if (max(timestamps) - min(timestamps)<self.WINDOW_SIZE_SECS) and len(timestamps)==3:
                                 if self.output_file is not None:
                                     with open(self.output_file, 'a') as f:
                                         json_line = json.dumps(latest_event)
