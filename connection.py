@@ -69,10 +69,7 @@ class P2PNetwork:
                 
     def connect(self, destination: str, port: int):
         try:
-            # Only prevent connection to exact same port
-            if port == self.listening_port:
-                print("Error: Cannot connect to own port.")
-                return
+            # Only prevent connection to exact same pot 
                 
             # Check for duplicate connections
             for conn in self.connections:
