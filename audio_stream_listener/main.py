@@ -1,3 +1,4 @@
+import json
 import pyaudio
 import numpy as np
 import sys
@@ -78,10 +79,11 @@ def get_sound_position(timestamps: dict,
     except np.linalg.LinAlgError:
         source_position = np.array([float('nan'), float('nan')])
     
-    return {
+    res = {
         **mic_positions,
         'source': source_position
     }
+    return {k:v.tolist() for k,v in res.items()}
 
 class NoiseDetector:
     # Audio configuration constants
@@ -94,14 +96,14 @@ class NoiseDetector:
     THRESHOLD = 10  # Amplitude threshold for noise detection
     COOLDOWN = 1.0  # Seconds between detections to avoid multiple triggers
 
-    def __init__(self, network=None):
+    def __init__(self, network=None, output_file = "./out.jsonl"):
         self.audio = None
         self.stream = None
         self.last_detection = 0
         self.network = network
         # Add buffer start time tracking
         self.buffer_start_time = 0
-        self.latest_event = None
+        self.output_file = output_file
         
     def initialize_audio(self) -> None:
         """Initialize PyAudio and open microphone stream."""
@@ -193,16 +195,19 @@ class NoiseDetector:
                         # Validate event_dict 
                         timestamps = latest_event_times.values()
                         if None not in timestamps:
-                            _latest_event = {
+                            latest_event = {
                                 "event_times":latest_event_times,
                                 "coord_dict":get_sound_position(latest_event_times),
                                 "amplitude":amplitude.item()
                             }
                             if (max(timestamps) - min(timestamps)<self.CHUNK_SIZE) and len(timestamps)==3:
-                                self.latest_event = _latest_event
-                                print(f"EVENT COORD UPDATED    : {_latest_event}")
+                                with open(self.output_file, 'a') as f:
+                                    json_line = json.dumps(latest_event)
+                                    f.write(json_line + '\n')
+
+                                print(f"EVENT COORD UPDATED    : {latest_event}")
                             else:
-                                print(f"EVENT NOT COORD UPDATED: {_latest_event}")
+                                print(f"EVENT NOT COORD UPDATED: {latest_event}")
 
                             
 
