@@ -94,7 +94,7 @@ class NoiseDetector:
     CHUNK_SIZE = 1024  # Number of frames per buffer (CHUNK_SIZE/RATE~0.0232seconds (23.2 ms))
     
     # Detection parameters
-    THRESHOLD = 5   # Amplitude threshold for noise detection
+    THRESHOLD = 3   # Amplitude threshold for noise detection
     COOLDOWN = 1.0  # Seconds between detections to avoid multiple triggers
 
     BUFFER_T_ALIGN = 1000
