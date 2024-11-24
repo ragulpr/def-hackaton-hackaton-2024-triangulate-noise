@@ -106,9 +106,9 @@ class NoiseDetector:
                 # Check if amplitude exceeds threshold and cooldown period has passed
                 if (amplitude > self.THRESHOLD and 
                     current_time - self.last_detection > self.COOLDOWN):
-                    print(f"Noise detected! Amplitude: {amplitude:.2f}")
+                    # print(f"Noise detected! Amplitude: {amplitude:.2f}")
                     self.last_detection = current_time
-                    print(self.network)
+                    # print(self.network)
                     
                     # Send noise detection to all connected peers
                     if self.network:
@@ -160,6 +160,9 @@ def main():
     detector_thread.daemon = True
     detector_thread.start()
 
+    print(f"My IP address: {network.get_my_ip()}")
+    print(f"Listening on port: {network.listening_port}")
+
     # Main command loop
     while True:
         try:
@@ -168,12 +171,13 @@ def main():
             
             if not parts:
                 continue
-                
+
             cmd = parts[0].lower()
             
             if cmd == "help":
                 print_help()
             elif cmd == "connect" and len(parts) == 3:
+                print("CONNECTING")
                 network.connect(parts[1], int(parts[2]))
             # ... rest of the command handling ...
             
