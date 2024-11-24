@@ -1,5 +1,4 @@
 import json
-import math
 import pyaudio
 import numpy as np
 import sys

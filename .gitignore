@@ -55,3 +55,12 @@ coverage.xml
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Jupyter Notebook checkpoints
+notebooks/.ipynb_checkpoints/*
+
+# Ignore specific file types or files
+output.jsonl
