@@ -24,6 +24,7 @@ class NoiseDetector:
         self.network = network
         # Add buffer start time tracking
         self.buffer_start_time = 0
+        self.latest_event = None
         
     def initialize_audio(self) -> None:
         """Initialize PyAudio and open microphone stream."""
@@ -99,6 +100,10 @@ class NoiseDetector:
                     exact_timestamp - self.last_detection > self.COOLDOWN):
                     self.last_detection = exact_timestamp
                     
+                    latest_event_times = {
+                        self.network.get_my_ip():exact_timestamp.item(),
+                        }
+
                     print(f"Locally detected noise. Amplitude={amplitude:.2f} Time={exact_timestamp:.6f} BufferStartTime={buffer_start} Now={time.time()}")
                     
                     # Send noise detection to all connected peers with precise timing
@@ -106,7 +111,19 @@ class NoiseDetector:
                         message = f"NOISE_DETECTED amplitude={amplitude:.2f} time={exact_timestamp:.6f}"
                         for conn in self.network.connections:
                             self.network.send(conn.id, message)
-                    
+                            latest_event_times[conn.address]=conn.latest_event_time
+
+                        # Validate event_dict 
+                        timestamps = latest_event_times.values()
+                        if None not in timestamps and max(timestamps)-min(timestamps)<self.CHUNK_SIZE:
+                            self.latest_event = {
+                                "event_times":latest_event_times,
+                                "amplitude":amplitude
+                            }
+                            print(f"EVENT {self.latest_event}")
+
+                            
+
             except KeyboardInterrupt:
                 print("\nStopping noise detection...")
                 break
