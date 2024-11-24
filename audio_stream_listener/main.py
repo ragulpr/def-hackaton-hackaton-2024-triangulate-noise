@@ -6,6 +6,83 @@ import threading
 from typing import Optional
 from connection import P2PNetwork
 
+import numpy as np
+
+def get_sound_position(timestamps: dict,
+                      speed_of_sound: float = 343.0,  # meters/second
+                      mic_positions: dict = None) -> dict:
+    if len(timestamps) < 3:
+        print("Need at least 3 timestamps to calculate position")
+        return None
+    
+    # Use first 3 devices when sorted by ID
+    sorted_devices = sorted(timestamps.keys())[:3]
+    
+    # Default mic positions (equilateral triangle)
+    if mic_positions is None:
+        default_positions = [
+            np.array([0, 0]),      # First device
+            np.array([1, 0]),      # Second device
+            np.array([0.5, 0.866]) # Third device
+        ]
+        mic_positions = {
+            device_id: pos 
+            for device_id, pos in zip(sorted_devices, default_positions)
+        }
+    
+    # Get reference time (earliest timestamp)
+    reference_time = min(timestamps[device_id] for device_id in sorted_devices)
+    reference_device = min(
+        ((device_id, timestamps[device_id]) for device_id in sorted_devices),
+        key=lambda x: x[1]
+    )[0]
+    
+    # Calculate time differences relative to reference mic
+    time_diffs = {}
+    for device_id in sorted_devices:
+        if device_id == reference_device:
+            continue
+        time_diffs[device_id] = timestamps[device_id] - reference_time
+    
+    # Convert time differences to distance differences
+    distance_diffs = {
+        device_id: dt * speed_of_sound 
+        for device_id, dt in time_diffs.items()
+    }
+    
+    # Get mic positions
+    p1 = mic_positions[reference_device]
+    remaining_devices = [d for d in sorted_devices if d != reference_device]
+    p2 = mic_positions[remaining_devices[0]]
+    p3 = mic_positions[remaining_devices[1]]
+    
+    # Get distance differences
+    d21 = distance_diffs[remaining_devices[0]]
+    d31 = distance_diffs[remaining_devices[1]]
+    
+    # Create matrices for solving system of equations
+    A = np.array([
+        [2*(p2[0] - p1[0]), 2*(p2[1] - p1[1])],
+        [2*(p3[0] - p1[0]), 2*(p3[1] - p1[1])]
+    ])
+    
+    # Distance equations
+    b = np.array([
+        d21**2 + np.sum(p1**2) - np.sum(p2**2),
+        d31**2 + np.sum(p1**2) - np.sum(p3**2)
+    ])
+    
+    # Solve for source position
+    try:
+        source_position = np.linalg.solve(A, b)
+    except np.linalg.LinAlgError:
+        source_position = np.array([float('nan'), float('nan')])
+    
+    return {
+        **mic_positions,
+        'source': source_position
+    }
+
 class NoiseDetector:
     # Audio configuration constants
     CHUNK_SIZE = 1024  # Number of frames per buffer
@@ -115,12 +192,17 @@ class NoiseDetector:
 
                         # Validate event_dict 
                         timestamps = latest_event_times.values()
-                        if None not in timestamps and max(timestamps)-min(timestamps)<self.CHUNK_SIZE:
-                            self.latest_event = {
+                        if None not in timestamps:
+                            _latest_event = {
                                 "event_times":latest_event_times,
-                                "amplitude":amplitude
+                                "coord_dict":get_sound_position(latest_event_times),
+                                "amplitude":amplitude.item()
                             }
-                            print(f"EVENT {self.latest_event}")
+                            if (max(timestamps) - min(timestamps)<self.CHUNK_SIZE) and len(timestamps)==3:
+                                self.latest_event = _latest_event
+                                print(f"EVENT COORD UPDATED    : {_latest_event}")
+                            else:
+                                print(f"EVENT NOT COORD UPDATED: {_latest_event}")
 
                             
 
@@ -144,6 +226,7 @@ class NoiseDetector:
         self.initialize_audio()
         self.detect_noise()
         self.cleanup()
+
 
 def main():
     if len(sys.argv) < 2:
