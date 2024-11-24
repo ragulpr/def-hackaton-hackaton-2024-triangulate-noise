@@ -3,6 +3,8 @@ import numpy as np
 import sys
 import time
 from typing import Optional
+import threading
+from connection import P2PNetwork
 
 class NoiseDetector:
     # Audio configuration constants
@@ -15,11 +17,12 @@ class NoiseDetector:
     THRESHOLD = 0.5  # Amplitude threshold for noise detection
     COOLDOWN = 1.0  # Seconds between detections to avoid multiple triggers
 
-    def __init__(self, simulation_mode=False):
+    def __init__(self, simulation_mode=False, network=None):
         self.audio = None
         self.stream = None
         self.last_detection = 0
         self.simulation_mode = simulation_mode
+        self.network = network  # Add P2P network reference
         
     def initialize_audio(self) -> None:
         """Initialize PyAudio and open microphone stream."""
@@ -103,8 +106,16 @@ class NoiseDetector:
                 # Check if amplitude exceeds threshold and cooldown period has passed
                 if (amplitude > self.THRESHOLD and 
                     current_time - self.last_detection > self.COOLDOWN):
-                    print("Hello", current_time, amplitude)
+                    print(f"Noise detected! Amplitude: {amplitude:.2f}")
                     self.last_detection = current_time
+                    print(self.network)
+                    
+                    # Send noise detection to all connected peers
+                    if self.network:
+                        message = f"NOISE_DETECTED amplitude={amplitude:.2f} time={current_time}"
+                        for conn in self.network.connections:
+                            print('send message')
+                            self.network.send(conn.id, message)
                     
             except KeyboardInterrupt:
                 print("\nStopping noise detection...")
@@ -129,8 +140,48 @@ class NoiseDetector:
         self.cleanup()
 
 def main():
-    detector = NoiseDetector(simulation_mode=False)  # Running in simulation mode by default since no audio input is available
-    detector.run()
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <port>")
+        sys.exit(1)
+
+    port = int(sys.argv[1])
+    network = P2PNetwork(port)
+    
+    # Start network server in a separate thread
+    server_thread = threading.Thread(target=network.start_server)
+    server_thread.daemon = True
+    server_thread.start()
+
+    # Create and run noise detector with network reference
+    detector = NoiseDetector(simulation_mode=False, network=network)
+    
+    # Start noise detection in a separate thread
+    detector_thread = threading.Thread(target=detector.run)
+    detector_thread.daemon = True
+    detector_thread.start()
+
+    # Main command loop
+    while True:
+        try:
+            command = input("> ").strip()
+            parts = command.split(maxsplit=2)
+            
+            if not parts:
+                continue
+                
+            cmd = parts[0].lower()
+            
+            if cmd == "help":
+                print_help()
+            elif cmd == "connect" and len(parts) == 3:
+                network.connect(parts[1], int(parts[2]))
+            # ... rest of the command handling ...
+            
+        except KeyboardInterrupt:
+            print("\nShutting down...")
+            network.terminate_all_connections()
+            detector.cleanup()
+            break
 
 if __name__ == "__main__":
     main()

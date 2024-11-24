@@ -59,7 +59,23 @@ class P2PNetwork:
                 message = connection.in_buffer.readline().strip()
                 if not message:
                     break
-                print(f"Message received from {connection.address}:{connection.port} - {message}")
+                
+                # Handle noise detection messages
+                if message.startswith("NOISE_DETECTED"):
+                    try:
+                        # Parse the message
+                        parts = message.split()
+                        amplitude = float(parts[1].split('=')[1])
+                        timestamp = float(parts[2].split('=')[1])
+                        
+                        print(f"\nNoise detected by peer {connection.address}:{connection.port}")
+                        print(f"Amplitude: {amplitude:.2f}, Time: {timestamp}")
+                        print("> ", end='', flush=True)  # Restore command prompt
+                    except Exception as e:
+                        print(f"Error parsing noise detection message: {e}")
+                else:
+                    print(f"Message received from {connection.address}:{connection.port} - {message}")
+                    
         except Exception as e:
             print(f"Connection error with {connection.address}:{connection.port}")
         finally:
