@@ -1,25 +1,24 @@
 import React from 'react';
 
 const RectangleMap = ({ objects }) => {
-  const width = 800;
-  const height = 600;
-
   return (
     <div className="flex items-center justify-center h-screen bg-gray-100">
       <div
         className="relative bg-white border border-gray-300"
         style={{
-          width: `${width}px`,
-          height: `${height}px`,
+          width: '800px',
+          height: '600px',
         }}
       >
         {objects.map((object, index) => (
           <div
             key={index}
-            className="absolute bg-blue-500 rounded-full"
+            className={`absolute rounded-full ${
+              object.type === 'user' ? 'bg-blue-500' : 'bg-red-500'
+            }`}
             style={{
-              width: '20px',
-              height: '20px',
+              width: `${object.size}px`,
+              height: `${object.size}px`,
               top: `${object.y}px`,
               left: `${object.x}px`,
               transform: 'translate(-50%, -50%)',

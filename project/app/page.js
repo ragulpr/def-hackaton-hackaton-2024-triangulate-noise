@@ -9,21 +9,17 @@ import RectangleMap from "./RectangleMap";
 // const FIRST_MIC = [0.2, 0]
 // const SECOND_MIC = [0.8, 0]
 
+
 export default function Home() {
-  // creating coordinate systems 
   const objects = [
-    { x: 0, y: 150 }, // Object 1
-    { x: 300, y: 400 }, // Object 2
-    { x: 700, y: 500 }, // Object 3
+    { type: 'user', x: 100, y: 150, size: 20 },   // A blue user
+    { type: 'object', x: 300, y: 400, size: 30 }, // A red object
+    { type: 'user', x: 500, y: 200, size: 25 },   // Another blue user
   ];
 
   return (
-    <>
-      <main className="bg-gray-100 min-h-screen">
-        <RectangleMap objects={objects} />
-      </main>
-    </>
+    <main className="bg-gray-100 min-h-screen">
+      <RectangleMap objects={objects} />
+    </main>
   );
-
-
 }
