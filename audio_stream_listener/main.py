@@ -14,7 +14,7 @@ class NoiseDetector:
     RATE = 44100  # Sampling rate (Hz)
     
     # Detection parameters
-    THRESHOLD = 0.5  # Amplitude threshold for noise detection
+    THRESHOLD = 1.5  # Amplitude threshold for noise detection
     COOLDOWN = 1.0  # Seconds between detections to avoid multiple triggers
 
     def __init__(self, simulation_mode=False, network=None):
@@ -106,15 +106,12 @@ class NoiseDetector:
                 # Check if amplitude exceeds threshold and cooldown period has passed
                 if (amplitude > self.THRESHOLD and 
                     current_time - self.last_detection > self.COOLDOWN):
-                    # print(f"Noise detected! Amplitude: {amplitude:.2f}")
                     self.last_detection = current_time
-                    # print(self.network)
                     
                     # Send noise detection to all connected peers
                     if self.network:
                         message = f"NOISE_DETECTED amplitude={amplitude:.2f} time={current_time}"
                         for conn in self.network.connections:
-                            print('send message')
                             self.network.send(conn.id, message)
                     
             except KeyboardInterrupt:
