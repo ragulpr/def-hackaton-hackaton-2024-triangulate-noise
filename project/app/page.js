@@ -1,20 +1,10 @@
-"use client"
-import Image from "next/image";
-import RectangleMap from "./RectangleMap";
-// import UserLocation from "./components/UserLocation";
-
-// const WIDTH = "1920"
-// const HEIGHT = "1080"
-
-// const FIRST_MIC = [0.2, 0]
-// const SECOND_MIC = [0.8, 0]
-
+import RectangleMap from './RectangleMap';
 
 export default function Home() {
   const objects = [
-    { type: 'user', x: 100, y: 150, size: 20 },   // A blue user
-    { type: 'object', x: 300, y: 400, size: 30 }, // A red object
-    { type: 'user', x: 500, y: 200, size: 25 },   // Another blue user
+    { type: 'user', x: 0.125, y: 0.25, size: 0.025 },   // A blue user (x: 12.5%, y: 25%, size: 2.5% of container width)
+    { type: 'object', x: 0.5, y: 0.5, size: 0.0375 }, // A red object (x: 37.5%, y: 50%, size: 3.75% of container width)
+    { type: 'user', x: 0.625, y: 0.333, size: 0.03125 }, // Another blue user (x: 62.5%, y: 33.3%, size: 3.125% of container width)
   ];
 
   return (
