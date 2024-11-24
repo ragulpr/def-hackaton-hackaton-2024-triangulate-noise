@@ -28,4 +28,4 @@ Run the [notebook](./notebooks/plot-res.ipynb) to plot the results.
 
 
 ##### Comments
-This ended up not working good at all, there's bugs everywhere. 
+This ended up not being very accurate but it seems promising
