@@ -251,7 +251,7 @@ def main():
     if len(sys.argv)==3:
         output_file = sys.argv[2]
         with open(output_file, 'a') as f:
-            filetowrite.write('')
+            f.write('')
     else:
         output_file=None
 
