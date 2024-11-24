@@ -1,4 +1,5 @@
 import json
+import math
 import pyaudio
 import numpy as np
 import sys
@@ -87,14 +88,16 @@ def get_sound_position(timestamps: dict,
 
 class NoiseDetector:
     # Audio configuration constants
-    CHUNK_SIZE = 1024  # Number of frames per buffer
     FORMAT = pyaudio.paFloat32  # Audio format (32-bit float)
     CHANNELS = 1  # Mono audio
     RATE = 44100  # Sampling rate (Hz)
+    CHUNK_SIZE = 1024  # Number of frames per buffer (CHUNK_SIZE/RATE~0.0232seconds (23.2 ms))
     
     # Detection parameters
     THRESHOLD = 10  # Amplitude threshold for noise detection
     COOLDOWN = 1.0  # Seconds between detections to avoid multiple triggers
+
+    BUFFER_T_ALIGN = 1000
 
     def __init__(self, network=None, output_file = "./out.jsonl"):
         self.audio = None
@@ -138,6 +141,11 @@ class NoiseDetector:
     def process_audio(self) -> Optional[tuple[float, float]]:
         """Process audio chunk and return (amplitude, exact_timestamp)."""
         try:
+            # Wait until closest ms ex 175859585.0 to align devices frames
+            now = time.time()
+            wait_time = (math.ceil(now * self.BUFFER_T_ALIGN) - now * self.BUFFER_T_ALIGN) / self.BUFFER_T_ALIGN
+            time.sleep(wait_time)
+
             # Record the exact time before reading the buffer
             buffer_start = time.time()
             data = np.frombuffer(
