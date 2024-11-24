@@ -2,8 +2,8 @@ import pyaudio
 import numpy as np
 import sys
 import time
-from typing import Optional
 import threading
+from typing import Optional
 from connection import P2PNetwork
 
 class NoiseDetector:
@@ -17,20 +17,14 @@ class NoiseDetector:
     THRESHOLD = 20  # Amplitude threshold for noise detection
     COOLDOWN = 1.0  # Seconds between detections to avoid multiple triggers
 
-    def __init__(self, simulation_mode=False, network=None):
+    def __init__(self, network=None):
         self.audio = None
         self.stream = None
         self.last_detection = 0
-        self.simulation_mode = simulation_mode
-        self.network = network  # Add P2P network reference
+        self.network = network
         
     def initialize_audio(self) -> None:
         """Initialize PyAudio and open microphone stream."""
-        if self.simulation_mode:
-            print("Running in simulation mode (no microphone required)")
-            print("Generating test noise data... (Press Ctrl+C to exit)")
-            return
-
         try:
             self.audio = pyaudio.PyAudio()
             
@@ -43,9 +37,7 @@ class NoiseDetector:
                     break
             
             if input_device is None:
-                print("No input devices found, switching to simulation mode")
-                self.simulation_mode = True
-                return
+                raise Exception("No input devices found")
                 
             self.stream = self.audio.open(
                 format=self.FORMAT,
@@ -59,26 +51,11 @@ class NoiseDetector:
             print("Listening for loud noises... (Press Ctrl+C to exit)")
         except Exception as e:
             print(f"Error initializing audio: {str(e)}")
-            print("Switching to simulation mode")
-            self.simulation_mode = True
+            raise
 
     def process_audio(self) -> Optional[float]:
         """Process audio chunk and return max amplitude."""
         try:
-            if self.simulation_mode:
-                # Generate simulated noise data with more variation
-                time.sleep(0.1)  # Simulate processing time
-                # Generate occasional spikes in noise level
-                if np.random.random() < 0.1:  # 10% chance of a noise spike
-                    return np.random.uniform(0.6, 1.0)  # Higher amplitude noise
-                return np.random.uniform(0, 0.4)  # Background noise
-            
-            # Read audio data
-            if self.stream is None:
-                print("Audio stream not initialized, switching to simulation mode")
-                self.simulation_mode = True
-                return np.random.uniform(0, 1)
-                
             data = np.frombuffer(
                 self.stream.read(self.CHUNK_SIZE, exception_on_overflow=False),
                 dtype=np.float32
@@ -123,12 +100,11 @@ class NoiseDetector:
 
     def cleanup(self) -> None:
         """Clean up audio resources."""
-        if not self.simulation_mode:
-            if self.stream is not None:
-                self.stream.stop_stream()
-                self.stream.close()
-            if self.audio is not None:
-                self.audio.terminate()
+        if self.stream is not None:
+            self.stream.stop_stream()
+            self.stream.close()
+        if self.audio is not None:
+            self.audio.terminate()
 
     def run(self) -> None:
         """Run the noise detector."""
@@ -150,7 +126,7 @@ def main():
     server_thread.start()
 
     # Create and run noise detector with network reference
-    detector = NoiseDetector(simulation_mode=False, network=network)
+    detector = NoiseDetector(network=network)
     
     # Start noise detection in a separate thread
     detector_thread = threading.Thread(target=detector.run)
@@ -176,7 +152,6 @@ def main():
             elif cmd == "connect" and len(parts) == 3:
                 print("CONNECTING")
                 network.connect(parts[1], int(parts[2]))
-            # ... rest of the command handling ...
             
         except KeyboardInterrupt:
             print("\nShutting down...")
@@ -186,4 +161,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
