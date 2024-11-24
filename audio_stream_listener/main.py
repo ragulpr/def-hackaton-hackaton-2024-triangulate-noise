@@ -14,7 +14,7 @@ class NoiseDetector:
     RATE = 44100  # Sampling rate (Hz)
     
     # Detection parameters
-    THRESHOLD = 1.5  # Amplitude threshold for noise detection
+    THRESHOLD = 20  # Amplitude threshold for noise detection
     COOLDOWN = 1.0  # Seconds between detections to avoid multiple triggers
 
     def __init__(self, simulation_mode=False, network=None):
