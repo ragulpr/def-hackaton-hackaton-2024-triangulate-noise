@@ -193,13 +193,12 @@ class NoiseDetector:
                         # Validate event_dict 
                         timestamps = latest_event_times.values()
                         if None not in timestamps:
-                            coord_dict = get_sound_position(latest_event_times)
                             _latest_event = {
                                 "event_times":latest_event_times,
-                                "coord_dict":coord_dict,
+                                "coord_dict":get_sound_position(latest_event_times),
                                 "amplitude":amplitude.item()
                             }
-                            if (max(timestamps)-min(timestamps)<self.CHUNK_SIZE) and len(timestamps)==3:
+                            if (max(timestamps) - min(timestamps)<self.CHUNK_SIZE) and len(timestamps)==3:
                                 self.latest_event = _latest_event
                                 print(f"EVENT COORD UPDATED    : {_latest_event}")
                             else:
