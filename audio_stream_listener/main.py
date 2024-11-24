@@ -208,7 +208,7 @@ class NoiseDetector:
                                 "coord_dict":get_sound_position(latest_event_times),
                                 "amplitude":amplitude.item()
                             }
-                            if (max(timestamps) - min(timestamps)<self.CHUNK_SIZE) and len(timestamps)==3:
+                            if (max(timestamps) - min(timestamps)<(self.CHUNK_SIZE/self.RATE)) and len(timestamps)==3:
                                 if self.output_file is not None:
                                     with open(self.output_file, 'a') as f:
                                         json_line = json.dumps(latest_event)
