@@ -99,7 +99,7 @@ class NoiseDetector:
 
     BUFFER_T_ALIGN = 1000
 
-    def __init__(self, network=None, output_file = "./out.jsonl"):
+    def __init__(self, network=None, output_file = None):
         self.audio = None
         self.stream = None
         self.last_detection = 0
@@ -209,9 +209,10 @@ class NoiseDetector:
                                 "amplitude":amplitude.item()
                             }
                             if (max(timestamps) - min(timestamps)<self.CHUNK_SIZE) and len(timestamps)==3:
-                                with open(self.output_file, 'a') as f:
-                                    json_line = json.dumps(latest_event)
-                                    f.write(json_line + '\n')
+                                if self.output_file is not None:
+                                    with open(self.output_file, 'a') as f:
+                                        json_line = json.dumps(latest_event)
+                                        f.write(json_line + '\n')
 
                                 print(f"EVENT COORD UPDATED    : {latest_event}")
                             else:
@@ -243,10 +244,15 @@ class NoiseDetector:
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python main.py <port>")
+        print("Usage: python main.py 4091 ./out.jsonl")
         sys.exit(1)
 
     port = int(sys.argv[1])
+    if len(sys.argv)==3:
+        output_file = sys.argv[2]
+    else:
+        output_file=None
+
     network = P2PNetwork(port)
     
     # Start network server in a separate thread
@@ -255,7 +261,7 @@ def main():
     server_thread.start()
 
     # Create and run noise detector with network reference
-    detector = NoiseDetector(network=network)
+    detector = NoiseDetector(network=network,output_file=output_file)
     
     # Start noise detection in a separate thread
     detector_thread = threading.Thread(target=detector.run)
