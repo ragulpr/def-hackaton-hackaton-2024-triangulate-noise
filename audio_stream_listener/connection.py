@@ -12,6 +12,7 @@ class Connection:
         self.port = socket.getpeername()[1]
         self.in_buffer = self.socket.makefile('r')
         self.out_buffer = self.socket.makefile('w')
+        self.latest_event_time = None
         
     def send_message(self, message: str):
         try:
@@ -67,7 +68,7 @@ class P2PNetwork:
                         parts = message.split()
                         amplitude = float(parts[1].split('=')[1])
                         timestamp = float(parts[2].split('=')[1])
-                        
+                        connection.latest_event_time = timestamp
                         print(f"\nNoise detected by peer {connection.address}:{connection.port}")
                         print(f"Amplitude: {amplitude:.2f}, Time: {timestamp}")
                         print("> ", end='', flush=True)  # Restore command prompt
