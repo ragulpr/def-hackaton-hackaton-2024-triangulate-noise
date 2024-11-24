@@ -22,6 +22,8 @@ class NoiseDetector:
         self.stream = None
         self.last_detection = 0
         self.network = network
+        # Add buffer start time tracking
+        self.buffer_start_time = 0
         
     def initialize_audio(self) -> None:
         """Initialize PyAudio and open microphone stream."""
@@ -53,9 +55,11 @@ class NoiseDetector:
             print(f"Error initializing audio: {str(e)}")
             raise
 
-    def process_audio(self) -> Optional[float]:
-        """Process audio chunk and return max amplitude."""
+    def process_audio(self) -> Optional[tuple[float, float]]:
+        """Process audio chunk and return (amplitude, exact_timestamp)."""
         try:
+            # Record the exact time before reading the buffer
+            buffer_start = time.time()
             data = np.frombuffer(
                 self.stream.read(self.CHUNK_SIZE, exception_on_overflow=False),
                 dtype=np.float32
@@ -63,7 +67,17 @@ class NoiseDetector:
             
             # Calculate amplitude
             amplitude = np.max(np.abs(data))
-            return amplitude
+            
+            # Find the exact sample where the peak occurred
+            peak_sample_index = np.argmax(np.abs(data))
+            
+            # Calculate the precise time of the peak
+            # Each sample represents 1/RATE seconds
+            seconds_per_sample = 1.0 / self.RATE
+            peak_time_offset = peak_sample_index * seconds_per_sample
+            exact_timestamp = buffer_start + peak_time_offset
+            
+            return amplitude, exact_timestamp, buffer_start
             
         except Exception as e:
             print(f"Error processing audio: {str(e)}")
@@ -73,21 +87,23 @@ class NoiseDetector:
         """Main detection loop."""
         while True:
             try:
-                amplitude = self.process_audio()
+                result = self.process_audio()
                 
-                if amplitude is None:
+                if result is None:
                     continue
                 
-                current_time = time.time()
+                amplitude, exact_timestamp, buffer_start = result
                 
                 # Check if amplitude exceeds threshold and cooldown period has passed
                 if (amplitude > self.THRESHOLD and 
-                    current_time - self.last_detection > self.COOLDOWN):
-                    self.last_detection = current_time
+                    exact_timestamp - self.last_detection > self.COOLDOWN):
+                    self.last_detection = exact_timestamp
                     
-                    # Send noise detection to all connected peers
+                    print(f"Locally detected noise. Amplitude={amplitude:.2f} Time={exact_timestamp:.6f} BufferStartTime={buffer_start} Now={time.time()}")
+                    
+                    # Send noise detection to all connected peers with precise timing
                     if self.network:
-                        message = f"NOISE_DETECTED amplitude={amplitude:.2f} time={current_time}"
+                        message = f"NOISE_DETECTED amplitude={amplitude:.2f} time={exact_timestamp:.6f}"
                         for conn in self.network.connections:
                             self.network.send(conn.id, message)
                     
