@@ -111,7 +111,7 @@ class NoiseDetector:
                         message = f"NOISE_DETECTED amplitude={amplitude:.2f} time={exact_timestamp:.6f}"
                         for conn in self.network.connections:
                             self.network.send(conn.id, message)
-                            latest_event_times[conn.id]=conn.latest_event_time
+                            latest_event_times[conn.address]=conn.latest_event_time
 
                         # Validate event_dict 
                         timestamps = latest_event_times.values()
