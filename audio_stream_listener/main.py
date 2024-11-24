@@ -12,7 +12,8 @@ def get_sound_position(timestamps: dict,
                       speed_of_sound: float = 343.0,  # meters/second
                       mic_positions: dict = None) -> dict:
     if len(timestamps) < 3:
-        raise ValueError("Need at least 3 timestamps to calculate position")
+        print("Need at least 3 timestamps to calculate position")
+        return None
     
     # Use first 3 devices when sorted by ID
     sorted_devices = sorted(timestamps.keys())[:3]
@@ -191,14 +192,18 @@ class NoiseDetector:
 
                         # Validate event_dict 
                         timestamps = latest_event_times.values()
-                        if None not in timestamps and max(timestamps)-min(timestamps)<self.CHUNK_SIZE:
+                        if None not in timestamps:
                             coord_dict = get_sound_position(latest_event_times)
-                            self.latest_event = {
+                            _latest_event = {
                                 "event_times":latest_event_times,
                                 "coord_dict":coord_dict,
-                                "amplitude":amplitude
+                                "amplitude":amplitude.item()
                             }
-                            print(f"EVENT {self.latest_event}")
+                            if (max(timestamps)-min(timestamps)<self.CHUNK_SIZE) and len(timestamps)==3:
+                                self.latest_event = _latest_event
+                                print(f"EVENT COORD UPDATED    : {_latest_event}")
+                            else:
+                                print(f"EVENT NOT COORD UPDATED: {_latest_event}")
 
                             
 
