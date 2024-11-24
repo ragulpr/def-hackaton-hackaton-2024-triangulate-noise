@@ -97,8 +97,6 @@ class NoiseDetector:
     THRESHOLD = 3   # Amplitude threshold for noise detection
     COOLDOWN = 4*WINDOW_SIZE_SECS  # Seconds between detections to avoid multiple triggers
 
-    BUFFER_T_ALIGN = 1000
-
     def __init__(self, network=None, output_file = None):
         self.audio = None
         self.stream = None
@@ -141,11 +139,6 @@ class NoiseDetector:
     def process_audio(self) -> Optional[tuple[float, float]]:
         """Process audio chunk and return (amplitude, exact_timestamp)."""
         try:
-            # Wait until closest ms ex 175859585.0 to align devices frames
-            now = time.time()
-            wait_time = (math.ceil(now * self.BUFFER_T_ALIGN) - now * self.BUFFER_T_ALIGN) / self.BUFFER_T_ALIGN
-            time.sleep(wait_time)
-
             # Record the exact time before reading the buffer
             buffer_start = time.time()
             data = np.frombuffer(
