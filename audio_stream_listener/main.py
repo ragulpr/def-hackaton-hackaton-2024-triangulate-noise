@@ -95,7 +95,7 @@ class NoiseDetector:
     WINDOW_SIZE_SECS = CHUNK_SIZE/RATE
     # Detection parameters
     THRESHOLD = 3   # Amplitude threshold for noise detection
-    COOLDOWN = 4*WINDOW_SIZE_SECS  # Seconds between detections to avoid multiple triggers
+    COOLDOWN = 1  # Seconds between detections to avoid multiple triggers
 
     def __init__(self, network=None, output_file = None):
         self.audio = None
@@ -190,7 +190,10 @@ class NoiseDetector:
                     if self.network:
                         message = f"NOISE_DETECTED amplitude={amplitude:.2f} time={exact_timestamp:.6f}"
                         for conn in self.network.connections:
-                            self.network.send(conn.id, message)
+                            self.network.send(conn.id, message)                     
+
+                        time.sleep(self.COOLDOWN/4)
+                        for conn in self.network.connections:
                             latest_event_times[conn.address]=conn.latest_event_time
 
                         # Validate event_dict 
